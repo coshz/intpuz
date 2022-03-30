@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <set>
 #include <algorithm>
 
 using namespace std;
@@ -163,7 +162,6 @@ vector<vector<int>> permutations(int n, int m, bool mode)
                 std::sort(tmp.begin(),tmp.end());
                 std::set_difference(items.begin(), items.end(), tmp.begin(), tmp.end(),
                     std::inserter(choosing, choosing.begin()));
-                std::sort(choosing.begin(),choosing.end());
             }
 
             for(auto v :choosing)
@@ -281,7 +279,6 @@ struct compModel
 
     tuple<Rational<T>, vector<string>> evaluate(const binaryTree *bt, const vector<T> &vi, const vector<Operator> &vo)
     {
-        //bool to 
         vector<string> expr{};
         Rational<T> result{0,0};
 
@@ -319,6 +316,8 @@ struct compModel
 
     vector<vector<string>> solve(bool greedy=true)
     {
+        //greedy == true, find all solutions.
+        //[TODO] remove equivalent (commutativity of ops) solutions 
         auto nums_vec = numsAll(this->nnums);
         auto ops_vec = opsAll(this->nnums.size()-1, vector<Operator>{ADD,SUB,MUL,DIV});
         auto tree_vec = binaryTreesAll(this->nnums.size()-1);
