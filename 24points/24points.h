@@ -285,7 +285,7 @@ struct compModel
         if(!bt)
         {
             expr.push_back(std::to_string(vi[0]));
-            result = vi[0];   
+            result = Rational{vi[0],1};   
         }
         else
         {    
