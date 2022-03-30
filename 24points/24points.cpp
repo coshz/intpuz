@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 /** FOR TEST
 ============================================*/
 
@@ -15,31 +14,30 @@ void prtvec(vector<int> &v)
     cout<<endl;
 } 
 
-void per()
+void perall()
 {
     auto x = permutations(3,4,true);
     for (auto &i:x)
-    prtvec(i);
+        prtvec(i);
 
     auto u = numsAll<int>(vector<int>{1,5,3,5},true);
-    
     for (auto &v:u)
     {
         for(auto &i :v)
             cout<<i<<'\t';
         cout<<endl;
     }
-
     cout<<u.size()<<endl;
-    // auto u = opsAll(3,vector<Operator>{ADD,SUB,MUL,DIV},true);
-    // for (auto &v:u)
+
+    // auto w = opsAll(3,vector<Operator>{ADD,SUB,MUL,DIV},true);
+    // for (auto &v:w)
     // {
     //     for(auto &i :v)
     //         cout<<i<<'\t';
     //     cout<<endl;
     // }
 
-    // cout<<u.size()<<endl;
+    // cout<<w.size()<<endl;
     for(int i = 1; i< 10; i++)
     {
         auto x = binaryTreesAll(i);

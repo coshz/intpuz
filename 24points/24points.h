@@ -15,7 +15,7 @@ struct Rational
     Rational(T p=1, T q=1)
     {
         auto k = gcd(p,q);
-        this->r = vector<T>{p/k,q/k};
+        this->r = (q==0)?vector<T>{0,0}:vector<T>{p/k,q/k};
     }
     T gcd(T x, T y)
     {
@@ -33,7 +33,7 @@ struct Rational
                 return gcd(y,x%y);
         }
     }
-    bool isnan()const {return r[1] == 0;}
+    bool isnan()const {return this->r[1] == 0;}
 };
 
 template<class T=int>
@@ -47,13 +47,9 @@ Rational<T> ratmul(Rational<T> &lhs, Rational<T> &rhs, Operator op)
         case ADD: {p = p1*q2 + p2*q1, q = q1*q2; break;}
         case SUB: {p = p1*q2 - p2*q1, q = q1*q2; break;}
         case MUL: {p = p1*p2, q = q1*q2; break;}
-        case DIV: {
-            if(q1 == 0){
-                cerr<<"invalid argument";exit(1);}
-            else {
-                p=p1*q2, q = q1*p2; break;}}
+        case DIV: {p = p1*q2, q = q1*p2; break;}
     }
-    return Rational<T>(p,q); 
+    return Rational<T>{p,q}; 
 }
 
 template<class T=int>
