@@ -285,7 +285,7 @@ struct compModel
         if(!bt)
         {
             expr.push_back(std::to_string(vi[0]));
-            result = Rational{vi[0],1};   
+            result = Rational{vi[0]};   
         }
         else
         {    
@@ -314,7 +314,7 @@ struct compModel
         return make_tuple(result, expr);
     }
 
-    vector<vector<string>> solve(bool greedy=true)
+    vector<vector<string>> solve(T target=24, bool greedy=true)
     {
         //greedy == true, find all solutions.
         //[TODO] remove equivalent (commutativity of ops) solutions 
@@ -334,7 +334,7 @@ struct compModel
                         vector<string> expr;
 
                         std::tie(res,expr) = evaluate(&ct, nums, ops);
-                        if(res == Rational<T>(24,1))
+                        if(res == Rational<T>{target})
                         {
                             exprs.push_back(expr);
                             if(!greedy)
