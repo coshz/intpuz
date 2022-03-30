@@ -148,7 +148,7 @@ vector<vector<int>> permutations(int n, int m, bool mode)
         auto subperms = permutations(n-1,m,mode);
         vector<int> choosing{items};
 
-        for(auto tail: subperms)
+        for(auto &tail: subperms)
         {
             if(!mode) ;
             else
@@ -160,7 +160,7 @@ vector<vector<int>> permutations(int n, int m, bool mode)
                     std::inserter(choosing, choosing.begin()));
             }
 
-            for(auto v :choosing)
+            for(auto &v :choosing)
             {
                 auto perm{tail};
                 perm.insert(perm.end(),v);
