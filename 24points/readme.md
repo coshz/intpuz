@@ -17,7 +17,7 @@ example
 ```
 parameters
 
-1. data: vector<int> or vector<long>, size >=2
+1. data: vector\<int\> or vector\<long\>, size >=2
 2. target: same type as data[0], default = 24
 
 input & output
