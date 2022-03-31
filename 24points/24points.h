@@ -266,8 +266,9 @@ vector<binaryTree> binaryTreesAll(int size)
 template<class T>
 struct compModel
 {
-    vector<T> nnums;
-    compModel(vector<T> &data):nnums{data}{}
+    vector<T> nums;
+    vector<Operator> ops;
+    compModel(vector<T> &data):nums{data},ops{ADD,SUB,MUL,DIV}{}
     bool isvalidExpr(Rational<T> lnum, Rational<T> rnum, Operator op)
     {
         return !(lnum.isnan() || rnum.isnan() || (op == DIV && rnum.r[0] == 0));
@@ -314,32 +315,27 @@ struct compModel
     {
         //greedy == true, find all solutions.
         //[TODO] remove equivalent (commutativity of ops) solutions 
-        auto nums_vec = numsAll(this->nnums);
-        auto ops_vec = opsAll(this->nnums.size()-1, vector<Operator>{ADD,SUB,MUL,DIV});
-        auto tree_vec = binaryTreesAll(this->nnums.size()-1);
+        auto nums_vec = numsAll(this->nums);
+        auto ops_vec = opsAll(this->nums.size()-1, this->ops);
+        auto tree_vec = binaryTreesAll(this->nums.size()-1);
 
         vector<vector<string>> exprs;
 
         for(auto &ct: tree_vec)
-            for(auto &ops: ops_vec)
-                for(auto &nums: nums_vec)
-                {
-                    if(ct.size() == ops.size() && ct.size() == nums.size() - 1)
-                    {
-                        Rational <T> res;
-                        vector<string> expr;
+        for(auto &ops: ops_vec)
+        for(auto &nums: nums_vec)
+        {          
+            Rational <T> res;
+            vector<string> expr;
 
-                        std::tie(res,expr) = evaluate(&ct, nums, ops);
-                        if(res == Rational<T>{target})
-                        {
-                            exprs.push_back(expr);
-                            if(!greedy)
-                                goto end;
-                        }  
-                    }
-                    else
-                        cerr<<"inconsistent sizes.\n", exit(1);     
-                }
+            std::tie(res,expr) = evaluate(&ct, nums, ops);
+            if(res == Rational<T>{target})
+            {
+                exprs.push_back(expr);
+                if(!greedy)
+                    goto end;
+            }        
+        }
         end: ; // haha
         return exprs;
     }
