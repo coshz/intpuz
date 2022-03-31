@@ -41,7 +41,7 @@ Rational<T> ratmul(Rational<T> &lhs, Rational<T> &rhs, Operator op)
 {
     auto p1 = lhs.r[0], q1 = lhs.r[1];
     auto p2 = rhs.r[0], q2 = rhs.r[1];
-    decltype(p1) p, q;
+    T p, q;
     switch(op)
     {
         case ADD: {p = p1*q2 + p2*q1, q = q1*q2; break;}
@@ -61,10 +61,10 @@ bool operator==(const Rational<T> &lhs, const Rational<T> &rhs)
 struct binaryTree
 {
     /*
-    binaryTree *bt (bt!=nullptr):
-    1) empty or size 0 if: bt->ltree == bt->rtree == nullptr;
-    2) size n1+n2+1 if: bt->ltree and bt->rtree have size n1, n2 respectively.
     !!! binaryTree MUST be constructed by `new`.
+    1) the smallest tree (size 1): bt!=nullptr, bt->ltree == bt->rtree == nullptr;
+    2) trees A and B are equivalent if both their left trees and their right trees 
+        are equivalent; all smallest trees are equivalent. 
     */
     binaryTree *ltree, *rtree;
     binaryTree():ltree{nullptr},rtree{nullptr}{}
@@ -129,28 +129,28 @@ bool operator==(const binaryTree &lhs, const binaryTree &rhs)
     return (lhs.size() == rhs.size() && lhs.ltree->size() == rhs.ltree->size() && lhs.rtree->size() == rhs.rtree->size());
 }
 
-vector<vector<int>> permutations(int n, int m, bool mode)
+vector<vector<std::size_t>> permutations(std::size_t n, std::size_t m, bool reduce)
 {
-    //vector size n, value range 0~m-1
-    //mode: unique or not
+    //vector size n, value range 0~m-1;
+    //reduce: if ture, remove duplicates;
+   
+    vector<vector<std::size_t>> all{};
+    vector<std::size_t> items(m);
+    for(std::size_t i=0;i<items.size();i++) items[i] = i;
 
-    vector<vector<int>> all{};
-    vector<int> items(m);
-    for(int i=0;i<items.size();i++) items[i] = i;
-
-    if (mode && n>m) cerr<<"invalid arguments.\n", exit(1);
+    if (reduce && n>m) cerr<<"invalid arguments.\n", exit(1);
     else if(n <= 0) ;
     else if (n==1)
-        for (int x = 0; x<m; x++)
-            all.push_back(vector<int>{x});
+        for (std::size_t x = 0; x<m; x++)
+            all.push_back(vector<std::size_t>{x});
     else
     {
-        auto subperms = permutations(n-1,m,mode);
-        vector<int> choosing{items};
+        auto subperms = permutations(n-1,m,reduce);
+        vector<std::size_t> choosing{items};
 
         for(auto &tail: subperms)
         {
-            if(!mode) ;
+            if(!reduce) ;
             else
             {
                 choosing.clear();
@@ -281,7 +281,7 @@ struct compModel
         if(!bt)
         {
             expr.push_back(std::to_string(vi[0]));
-            result = Rational{vi[0]};   
+            result = Rational<T>{vi[0]};   
         }
         else
         {    
@@ -334,13 +334,13 @@ struct compModel
                         {
                             exprs.push_back(expr);
                             if(!greedy)
-                                goto bingle;
+                                goto end;
                         }  
                     }
                     else
                         cerr<<"inconsistent sizes.\n", exit(1);     
                 }
-        bingle: // haha
+        end: ; // haha
         return exprs;
     }
 };
