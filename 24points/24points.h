@@ -318,6 +318,7 @@ struct compModel
         auto nums_vec = numsAll(this->nums);
         auto ops_vec = opsAll(this->nums.size()-1, this->ops);
         auto tree_vec = binaryTreesAll(this->nums.size()-1);
+        auto tgt = Rational<T>{target};
 
         vector<vector<string>> exprs;
 
@@ -329,7 +330,7 @@ struct compModel
             vector<string> expr;
 
             std::tie(res,expr) = evaluate(&ct, nums, ops);
-            if(res == Rational<T>{target})
+            if(res == tgt)
             {
                 exprs.push_back(expr);
                 if(!greedy)
