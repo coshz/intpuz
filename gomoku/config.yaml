@@ -1,0 +1,20 @@
+# core 
+boardSize: 15
+# windowSize: [800, 600]
+rule: 'renju'  # gomoku, renju
+# record
+variant: -1
+unfold: True
+
+# gui
+cellSize: 45
+padding: 50
+bgColor: [0,127,0]
+skin: 'classic'
+mode: 2
+
+showOrdinate: True
+showCurrent: True
+showNumber: True
+
+
