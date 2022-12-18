@@ -1,4 +1,4 @@
-from enum import Enum, IntEnum
+from enum import Enum
 
 
 class Config:
@@ -7,6 +7,8 @@ class Config:
     shape = params[mode][:2]
     mines = params[mode][2]
     res = "skin/classic.bmp"
+    csize = 30
+    fsize = 50
 
     def then(self, res_class):
         self.res = res_class(self.res)

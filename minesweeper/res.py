@@ -10,9 +10,7 @@ class Res:
         self.state = {'ready': 0, 'running':0, 'check': 1, 'loss': 2, 'win': 3}
         self.mark = {'default': 0, 'clean': 1, 'flag': 3, 'mine_1': 2, 'mine_2': 4, 'boom': 5, 'unk': 6}
         self.wall = dict()
-        self.timeboard = None
-        # self.mark = dict.fromkeys(['default', 'clean', 'unk', 'flag', 'mine', 'boom'])
-
+        # self.timeboard = None
         self.parser()
 
     def parser(self):
@@ -30,7 +28,7 @@ class Res:
             idx = self.state[k]
             self.state[k] = self.data.copy(idx * 27, 55, 26, 26)
 
-        self.timeboard = self.data.copy(28, 82, 25, 41)
+        # self.timeboard = self.data.copy(28, 82, 25, 41)
         self.wall['lu'] = self.data.copy(0, 82, 12, 11)
         self.wall['lm'] = self.data.copy(0, 96, 12, 11)
         self.wall['ld'] = self.data.copy(0, 110, 12, 12)

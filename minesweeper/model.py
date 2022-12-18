@@ -7,82 +7,75 @@ class Board(np.ndarray):
 
 
 class MinesweeperModel:
-    def __init__(self, shape, n):
+    def __init__(self, shape, num_mines):
         self.shape = shape
-        self.n_mine = n
-        self.board = None
-        self.remain = shape[0] * shape[1] - n
-        self.state_ = GameState.Ready
-
-    def register(self, cfg):
-        self.shape = cfg.shape
-        self.n_mine = cfg.mines
-        self.remain = cfg.shape[0] * cfg.shape[1] - cfg.mines
-        self.state_ = GameState.Ready
+        self.mine = num_mines
+        # board, L0: is_dug; L1: is_mine, L2: num_mine of neighbors
+        self.board = np.zeros((shape[0] * shape[1], 3), np.byte).view(Board)
+        self.remain = shape[0] * shape[1] - num_mines
+        self.state = GameState.Ready
 
     def start(self, start_point=None):
-        # L0: is_dug; L1: is_mine, L2: num_mine of neighbors
         size = self.shape[0] * self.shape[1]
-        b = np.zeros((size, 3), np.byte).view(Board)
         all_pos = list(range(size))
         if start_point is not None:
             all_pos.pop(start_point)
-            b[start_point, 0] = 1
-        mine_pos = np.random.choice(all_pos, self.n_mine, replace=False)
+            self.board[start_point, 0] = 1
+        mine_pos = np.random.choice(all_pos, self.mine, replace=False)
         for pos in mine_pos:
-            b[pos, 1] = 1
+            self.board[pos, 1] = 1
         for i in range(size):
-            b[i, 2] = np.sum(b[self.neighbor(i), 1])
+            self.board[i, 2] = np.sum(self.board[self.neighbor(i), 1])
 
-        self.board = b
-        self.remain = size - self.n_mine
+        self.remain = size - self.mine
         self.state = GameState.Running
 
-    def sweep(self, pos):
+    def go(self, pos=None, is_check=False):
+        """Interface method
+
+        Args:
+            pos: pos index to dig;
+            is_check: is check request or not;
+        Returns: 
+            model state and feedback data.
+        """
+        # assert(self.state == GameState.Running)
+        if is_check:
+            self.state = GameState.Check
+            return self.state, list(self.peek(1))
+        else:  # assert(pos is not None)
+            if self.is_mine(pos):
+                self.state = GameState.Lose
+                return self.state, (list(self.peek(1)), pos)
+            else:
+                sd = self.dig_(pos)
+                if self.remain == 0:
+                    self.state = GameState.Win
+                return self.state, dict({p: self.board[p,2] for p in sd})
+
+    def dig_(self, pos):
+        """return dug pos(s) in this step"""
         self.board[pos, 0] = 1
         self.remain -= 1
-        return {pos: self.board[pos, 2]}
+        step_dug = [pos]
+        if self.is_clean(pos):
+            for p in self.neighbor(pos):
+                if self.is_dug(p):
+                    continue
+                step_dug.extend(self.dig_(p))
+        return step_dug
 
-    def dig(self, pos):
-        # return all swept pos and num of mine within neighbor in this step
-        if self.is_mine(pos):
-            self.state = GameState.Lose
-            return pos
-        else:
-            fd = self.sweep(pos)
-            if self.is_clean(pos):
-                for p in self.neighbor(pos):
-                    if self.is_dug(p):
-                        continue
-                    d = self.dig(p)
-                    fd.update(d)
-            if self.remain == 0:
-                self.state = GameState.Win
-            return fd
-
-    def peek(self):
-        self.state = GameState.Check
-        return list(self.board[:, 1].nonzero()[0])
-
-    @property
-    def state(self):
-        return self.state_
-
-    @state.setter
-    def state(self, s):
-        # return self.state, self.peek() if state == GameState.Check else None
-        # feedback = self.peek() if state == GameState.Check else None
-        self.state_ = s
+    def peek(self, i):
+        """return all index of: 0 for dug pos; 1 for mine pos"""
+        return list(self.board[:, i].nonzero()[0])
 
     def neighbor(self, idx):
-        neighbors = list()
         x, y = idx % self.shape[0], idx // self.shape[0]
-        tmp_p = [(x - 1, y - 1), (x - 1, y), (x - 1, y + 1),
+        tem_p = [(x - 1, y - 1), (x - 1, y), (x - 1, y + 1),
                  (x, y - 1), (x, y + 1),
                  (x + 1, y - 1), (x + 1, y), (x + 1, y + 1)]
-        for _x, _y in tmp_p:
-            if 0 <= _x < self.shape[0] and 0 <= _y < self.shape[1]:
-                neighbors.append(_x + _y * self.shape[0])
+        neighbors = [_x + _y * self.shape[0] for _x, _y in tem_p if \
+                    0 <= _x < self.shape[0] and 0 <= _y < self.shape[1]]
         return neighbors
 
     def is_mine(self, pos):
