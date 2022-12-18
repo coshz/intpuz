@@ -1,12 +1,24 @@
+TARGET_EXE := out
+SRC_DIR := src
+BUILD_DIR := build
+
 CXX=g++
-CXXFLAG=-std=c++11 -g
-OUTPUT=output
+CXXFLAGS=-std=c++17 -g # version >= c++14
 
-$(OUTPUT): 24points.o
-	$(CXX) -o  $(OUTPUT) 24points.o
+src_files = $(shell find $(SRC_DIR) -name '*.cpp')
+obj_files = $(src_files:%.cpp=$(BUILD_DIR)/%.o)
 
-%.o: %.cpp %.h
-	$(CXX) $(CXXFLAG) $< -c
+$(BUILD_DIR)/$(TARGET_EXE): $(obj_files)
+	$(CXX) $(obj_files) -o $@ $(LDFLAGS)
+
+$(BUILD_DIR)/%.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+.phony: clean, run
 
 clean: 
-	rm -rf *.o output
+	rm -r $(BUILD_DIR)
+
+run:
+	./$(BUILD_DIR)/$(TARGET_EXE)

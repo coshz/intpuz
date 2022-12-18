@@ -6,8 +6,8 @@ using namespace std;
 
 int main()
 {
-    vector<int> data{3,8,3,8};
-    //vector<int> data{23,29,77,83,65};
+    //vector<int> data{3,8,3,8};
+    vector<int> data{23,29,77,83,65};
     compModel<int> model{data};
     auto sts= model.solve(24);
 
