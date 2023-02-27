@@ -1,0 +1,23 @@
+
+[model]
+
+variant = "Marathon"        # Marathon, Sprint, Ultra
+lockdown = 1                # 0 ~ 2 for infinite placement, extended, classic
+goalSystem = 1              # 0, 1 for fixed / various goal
+randomSystem = 1            # 0, 1 for random / 7-bag random
+
+[ui]
+
+showGhostPiece = true       # true, false for on, off
+nextQueueSize = 1           # size of next queue, 0 ~ 6
+holdQueue = true            # true, false for on, off
+
+[time]
+
+generation = 200
+autoRepeat = 300 
+lockdown = 500
+
+[media]
+
+musicVolume = 100
