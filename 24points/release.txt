@@ -1,0 +1,10 @@
+
+:v0.3
+- add repl support
+
+:v0.2
+-  implement fixed-sized template Model to improve performance;
+- `model.solve(data_vec,target=24,greedy=false)`;
+
+:v0.1
+- traverse computation binary tree, operator vector and int vector to solve 24-points
