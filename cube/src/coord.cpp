@@ -1,7 +1,7 @@
 #include <cmath>
 #include <numeric>
-#include "coord.h"
-#include "cube.h"
+#include "coord.hh"
+#include "cube.hh"
 #include "help.hpp"
 
 inline bool isSliceEdge(size_t idx) 
@@ -142,5 +142,3 @@ CubieCube Coord::Coord2CubieCube(const Coord &c)
     return CubieCube(Coord::corner2cp(c.corner), Coord::twist2co(c.twist),
                      Coord::see2ep(c.slice,c.edge4,c.edge8), Coord::flip2eo(c.flip));
 }
-
-const Coord Coord::id = { 0,0,0,0,0,0 };

@@ -1,217 +1,165 @@
 #include <iostream>
-#include <stack>
-#include "maneuver.h"
+#include <regex>
+#include <algorithm>
+#include <functional>
+#include "maneuver.hh"
 #include "help.hpp"
 
 const char* CornerToString[8]       = { "urf", "ufl", "ulb", "ubr", "dfr", "dlf", "dbl", "drb" };
 const char* EdgeToString[12]        = { "ur","uf","ul","ub","dr","df","dl","db","fr","fl","bl","br" };
 const char* CenterToStringp[6]      = { "u", "r", "f", "d", "l", "b" };
 const char* OrientationToString[]   = { "", "+", "-" };
-const char* ColorSet                = "URFDLB" ;
+const char* ColorSet                = "URFDLB";
 
-std::vector<TurnAxis> str2vecTA(const char* ts, size_t n)
-{
-    auto repeat_substr = [](std::string s){
-        auto repeat_str = [](const std::string &input, size_t n){
-            std::string res = "";
-            for(size_t i = 0; i < n; i++) res += input;
-            return res;
-        };
-        std::stack<size_t> stack;
-        for(size_t i = 0; i < s.length(); i++){
-            if(s[i] == '(') {
-                stack.push(i);
-            } else if(s[i] == ')') {
-                if(stack.empty()) return s;
-                size_t lparen = stack.top(); stack.pop();
-                size_t lbrace = s.find('{', lparen);
-                if(lbrace != std::string::npos && lbrace > i){
-                    size_t rbrace = s.find('}', lbrace);
-                    if(rbrace != std::string::npos && rbrace > lbrace){
-                        auto sub = s.substr(lparen + 1, i - lparen - 1);
-                        auto num = std::stoi(s.substr(lbrace + 1, rbrace - lbrace - 1));
-                        auto rep_str = repeat_str(sub, num);
-                        s.replace(lparen, rbrace - lparen + 1, rep_str);
-                        i = lparen + rep_str.length() - 1;
-                    }
-                }
-            }
-        }
-        return s;
-    };
-
-    auto match_move = [](const char ch) -> int {
-        const char M[] = "URFDLB";
-        for(int i = 0; i < 6; i++) if(M[i] == ch) return i;
-        return -1;
-    };
-
-    std::string ts_new = repeat_substr(ts);
-    struct Mn { int m, n; };
-    std::vector<Mn> xs;
-    Mn x{-1,0};
-    int memory = -1;
-    for(size_t i = 0; i < ts_new.length(); i++)
-    {
-        if(-1 == match_move(ts_new[i])) continue;
-        if(memory == match_move(ts_new[i])) {
-            x.n += 1;
-        } else {
-            if(-1 != memory) xs.push_back(x);
-            memory = match_move(ts_new[i]);
-            x = Mn{memory, 1};
-        }
-        switch(ts_new[i+1])
-        {
-            case '\'': 
-            case '3':   x.n += 2; break;
-            case '2':   x.n += 1; break;
-            default:    break;
-        }
-    }
-    if(-1 != memory) xs.push_back(x);
-
-    std::vector<TurnAxis> ms;
-    for(auto &x: xs) 
-    for(auto l = 0; l < x.n % 4; l++) ms.push_back((TurnAxis)x.m);
-    return ms;
-}
 
 std::vector<TurnAxis> operator""_T(const char* ts, size_t n)
 {
-   return str2vecTA(ts, n);
-}
+    // 1. expand patterns 
+    // Y => Y, (Y){n} => Y...Y, (Y) => Y
+    auto expand_1 = [] (std::string in, std::string sep="") -> std::string {
+        auto re = std::regex(
+            "((?:[UDLRFB]['23]?)+)|"                        // Y: group 1
+            "(\\(((?:[UDLRFB]['23]?)+)\\)\\{(\\d+)\\})|"    // (Y){n}: group 2,3,4
+            "(\\(((?:[UDLRFB]['23]?)+)\\))"                 // (Y): group 5,6
+        );
 
-Maneuver::Maneuver(const std::string &s):Maneuver(str2vecTA(s.c_str(), s.length())){}
-Maneuver::Maneuver(const std::vector<TurnAxis> &ms)
-{
-    // default: identity
-    if(ms.size() == 0) {
-        for(size_t i = 0; i < 54; i++) facelets[i] = (Face) i;
-        for(size_t i = 0; i < 8; i++) std::get<0>(cubies)[i] = OrientedCorner{(Corner)i,0};
-        for(size_t i = 0; i < 12; i++) std::get<1>(cubies)[i] = OrientedEdge{(Edge)i,0};
-        return;
-    }
-
-    // facelets
-    for(int i = 0; i < 54; i++) {
-        int j = i;
-        for(auto &m: ms) { j = FaceletMove[m][j]; }
-        facelets[i] = (Face) j;
-    }
-
-    // cubies
-    for(unsigned i = 0; i < 8; i++){
-        unsigned j = i, o = 0;
-        for(auto rit = ms.rbegin(); rit != ms.rend(); ++rit) {
-            o = (o + CornerCubieMove[*rit][j].o) % 3, 
-            j = CornerCubieMove[*rit][j].c;
-        }
-        std::get<0>(cubies)[i] = OrientedCorner{(Corner)j, o};
-    }
-
-    for(unsigned i = 0; i < 12; i++){
-        unsigned j = i, o = 0;
-        for(auto rit = ms.rbegin(); rit != ms.rend(); ++rit) {
-            o = (o + EdgeCubieMove[*rit][j].o) % 2,
-            j = EdgeCubieMove[*rit][j].e;
-        }
-        std::get<1>(cubies)[i] = OrientedEdge{(Edge)j, o%2};
-    }
-}
-
-size_t Maneuver::order() const
-{
-    static size_t o = orderOf(facelets);
-    return o;
-}
-
-std::string Maneuver::str(int style) const
-{
-    switch(style) {
-    // case 0: // vec of facelets;  
-    //     return seq2str(facelets,"[","]",",");
-    // case 1: // vec of cubies {
-    //     auto ceoo = ceoo_extractor();
-    //     return seq2str(std::get<0>(ceoo),"[","]",",") + seq2str(std::get<1>(ceoo),"[","]",",")
-    //             + " -- " + seq2str(std::get<2>(ceoo)) + " " + seq2str(std::get<3>(ceoo));
-    // }
-    // case 2: cycle decompostion of vec of facelets {
-    //     auto cycles = decomposite(facelets);
-    //     if(cycles.size() == 1) return std::string("I");
-    //     std::string s = "";
-    //     // bypass fix-points
-    //     for(auto i = 1; i < cycles.size(); i++) {
-    //         s += seq2str(cycles[i], "(",")",",");
-    //     }
-    //     return s;
-    // }
-    case 0: // color cube
-    {
-        std::string str_cube(54,' ');
-        for(size_t i = 0; i < 54; i++){ str_cube[facelets[i]] = ColorSet[i/9]; }
-        return str_cube;
-    }
-    case 1: // cycle decomposition of vec of cubies
-    {
-        auto ceoo_extractor = [this]() {
-            std::vector<Corner> cp(8);
-            std::vector<Edge> ep(12);
-            std::vector<unsigned> co(8);
-            std::vector<unsigned> eo(12);
-            for(size_t i = 0; i < 8; i++) cp[i] = std::get<0>(cubies)[i].c;
-            for(size_t i = 0; i < 12; i++) ep[i] = std::get<1>(cubies)[i].e;
-            for(size_t i = 0; i < 8; i++) co[i] = std::get<0>(cubies)[i].o;
-            for(size_t i = 0; i < 12; i++) eo[i] = std::get<1>(cubies)[i].o;
-            return make_tuple(cp,ep,co,eo);
-        };
-        auto str_corners_or_edges = [this](const auto &xs, int ce){
-            std::vector<std::string> rs(xs.size());
-            for(size_t i = 0; i < rs.size(); i++){
-                rs[i] = (ce == 0) 
-                    ? std::string(OrientationToString[std::get<0>(cubies)[xs[i]].o]) 
-                      + CornerToString[xs[i]]
-                    : std::string(OrientationToString[std::get<1>(cubies)[xs[i]].o]) 
-                      + EdgeToString[xs[i]];
+        std::string res = "";
+        std::smatch m;
+        auto start = in.cbegin();
+        auto end = in.cend();
+        
+        while(true) {
+            std::regex_search(start, end, m, re);
+            if(m.empty()) break;
+            if(m[1].length() != 0) {
+                res += m[1].str();
             }
-            return rs;
-        };
-        std::string s1 = "", s2 = "";
-        auto ceoo = ceoo_extractor();
-        auto cycles_corner = decomposite(std::get<0>(ceoo));
-        auto cycles_edge = decomposite(std::get<1>(ceoo));
-        for(size_t i = 1; i < cycles_corner.size(); i++){
-            s1 += seq2str(str_corners_or_edges(cycles_corner[i], 0),"(",")",",");
+            else if(m[2].length() != 0) {
+                for(auto i = 0; i < std::stoi(m[4]); i++) res += m[3].str();
+            }
+            else if(m[5].length() != 0) {
+                res += m[6].str();
+            }
+            start = m.suffix().first;
+            res += sep;
         }
-        for(auto &c: cycles_corner[0]) {
-            // bypass location-orientaton double fixed points
-            if(std::get<0>(cubies)[c].o != 0)
-            s1 += seq2str(str_corners_or_edges(std::vector<Corner>{c}, 0),"(",")",",");
+        if(!res.empty()) res = std::string(res.begin(), res.end()-sep.size()); 
+        return res;
+    };
+
+    // 2. replace Y 
+    // X' => XXX, X2 => XX, X3 => XXX
+    auto expand_2 = [](std::string in) -> std::string {
+        std::string res{};
+        res.reserve(in.size());
+        for(auto it = in.begin(); it != in.end(); it++) {
+            switch(*it) {
+            case '2':   res = res + *(it-1); break;
+            case '3':
+            case '\'':  res = res + *(it-1) + *(it-1); break;
+            default:    res = res + *it;
+            }
         }
-        for(size_t i =  1; i < cycles_edge.size(); i++){
-            s2 += seq2str(str_corners_or_edges(cycles_edge[i], 1),"(",")",",");
-        }
-        for(auto &e: cycles_edge[0]) {
-            if(std::get<1>(cubies)[e].o != 0) 
-            s2 += seq2str(str_corners_or_edges(std::vector<Edge>{e}, 1),"(",")",",");
-        }
-        if(s1 == "" && s2 == "") return std::string("I");
-        else return s1 + s2;
-    }
-    }
-    return std::string("");
+        return res;
+    };  
+
+    // 3. character-wise map
+    std::string s = expand_2(expand_1(std::string(ts,n)));
+    std::vector<TurnAxis> ms(s.length());
+    for(auto i = 0; i < ms.size(); i++) 
+        for(auto j = 0; j < 6; j++) 
+        if(ColorSet[j] == s[i]) { ms[i] = (TurnAxis) j; break; }
+    return ms;
 }
 
-auto Maneuver::ceoo() const -> std::tuple<
-    std::vector<Corner>, std::vector<unsigned>,std::vector<Edge>, std::vector<unsigned>>
+auto Maneuver::get_facecube() const -> facecube_t&
 {
-    std::vector<Corner> cp(8);
-    std::vector<Edge> ep(12);
-    std::vector<unsigned> co(8);
-    std::vector<unsigned> eo(12);
-    for(size_t i = 0; i < 8; i++) cp[i] = std::get<0>(cubies)[i].c;
-    for(size_t i = 0; i < 12; i++) ep[i] = std::get<1>(cubies)[i].e;
-    for(size_t i = 0; i < 8; i++) co[i] = std::get<0>(cubies)[i].o;
-    for(size_t i = 0; i < 12; i++) eo[i] = std::get<1>(cubies)[i].o;
-    return make_tuple(cp,co,ep,eo);
+    if(!fc_cached_) {
+        for(size_t i = 0; i < 54; i++) {
+            size_t j = i;
+            for(auto &m: ms) { j = FaceletMove[m][j]; }
+            fc[i] = (Face) j;
+        }
+        fc_cached_ = true;
+    }
+    return fc;
+}
+
+auto Maneuver::get_cubiecube() const -> cubiecube_t&
+{
+    if(!cc_cached_) {
+        for(size_t i = 0; i < 8; i++) {
+            size_t j = i, o = 0;
+            for(auto rit = ms.rbegin(); rit != ms.rend(); ++rit) {
+                o = (o + CornerCubieMove[*rit][j].o) % 3, 
+                j = CornerCubieMove[*rit][j].c;
+            }
+            std::get<0>(cc)[i] = (Corner)j;
+            std::get<1>(cc)[i] = o;
+        }
+
+        for(size_t i = 0; i < 12; i++){
+            size_t j = i, o = 0;
+            for(auto rit = ms.rbegin(); rit != ms.rend(); ++rit) {
+                o = (o + EdgeCubieMove[*rit][j].o) % 2,
+                j = EdgeCubieMove[*rit][j].e;
+            }
+            std::get<2>(cc)[i] = (Edge)j;
+            std::get<3>(cc)[i] = o;
+        }
+        cc_cached_ = true;
+    }
+    return cc;
+}
+
+auto Maneuver::fc_color() -> std::string
+{
+    auto fc = get_facecube();
+    std::string str_cube(54,' ');
+    for(size_t i = 0; i < 54; i++){ str_cube[fc[i]] = ColorSet[i/9]; }
+    return str_cube;
+}
+
+auto Maneuver::cc_permutation() -> std::string
+{
+    auto cc = get_cubiecube();
+    auto cycles_corner = decomposite(std::get<0>(cc));
+    auto cycles_edge = decomposite(std::get<2>(cc));
+
+    // TODO
+    // conversion from corner cyles and edge cycles to string have similar logic;
+    // however, I haven't conceived a good solution to combine them...
+
+    auto cycle2str = [&cc](const auto &cycle, int ce) -> std::vector<std::string> {
+        std::vector<std::string> rs(cycle.size());
+        for(size_t i = 0; i < rs.size(); i++) {
+            rs[i] = (ce == 0) 
+                ? std::string(OrientationToString[std::get<1>(cc)[cycle[i]]]) 
+                    + CornerToString[cycle[i]]
+                : std::string(OrientationToString[std::get<3>(cc)[cycle[i]]]) 
+                    + EdgeToString[cycle[i]];
+        }
+        return rs;
+    };
+
+    std::string s1 = "", s2 = "";
+
+    for(auto i = 1; i < cycles_corner.size(); i++) {
+        s1 += seq2str(cycle2str(cycles_corner[i], 0), "(", ")", ",");
+    }
+    for(auto i = 0; i < cycles_corner[0].size(); i++) {
+        if(std::get<1>(cc)[cycles_corner[0][i]] != 0) 
+        s1 += seq2str(cycle2str(std::vector<Corner> {cycles_corner[0][i]}, 0), "(", ")", ",");
+    }
+
+    for(auto i = 1; i < cycles_edge.size(); i++) {
+        s2 += seq2str(cycle2str(cycles_edge[i], 1), "(", ")", ",");
+    }
+    for(auto i = 0; i < cycles_edge[0].size(); i++) {
+        if(std::get<3>(cc)[cycles_edge[0][i]] != 0) 
+        s2 += seq2str(cycle2str(std::vector<Edge> {cycles_edge[0][i]}, 1), "(", ")", ",");
+    }
+
+    if(s1 == "" && s2 == "") return std::string("I");
+    else return s1 + s2;
 }

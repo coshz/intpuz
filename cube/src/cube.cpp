@@ -1,7 +1,6 @@
-#include "def.h"
-#include "cube.h"
 #include <iostream>
 #include <set>
+#include "cube.hh"
 
 constexpr CornerPerm    eCP = {0,1,2,3,4,5,6,7};
 constexpr EdgePerm      eEP = {0,1,2,3,4,5,6,7,8,9,10,11};
@@ -12,8 +11,8 @@ constexpr FacePerm      eFP = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
 const FaceCube FaceCube::id = FaceCube(eFP);
 const CubieCube CubieCube::id = CubieCube(eCP,eCO,eEP,eEO);
 
-template<typename C>
-bool isValidConfig(const  C &cfg)
+template<typename VectorLike>
+bool isValidConfig(const VectorLike &cfg)
 {
     // check size
     if(cfg.size() != 54) return false;
@@ -83,7 +82,9 @@ std::string FaceCube::color(std::string cset) const
 
 FaceCube::FaceCube(const CubieCube &cc)
 {
-    for(size_t i = 0; i < 6; i++) { this->f[CC[i]] = CC[i]; }
+    for(size_t i = 0; i < 6; i++) { 
+        this->f[CC[i]] = CC[i]; 
+    }
     for(size_t i = 0; i < 8; i++) for(size_t j = 0; j < 3; j++) {
         this->f[CF[i][j]] = CF[cc.cp[i]][(3 - cc.co[i] + j) % 3];
     }

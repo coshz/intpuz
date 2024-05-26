@@ -1,8 +1,11 @@
-#include "table.h"
-#include "coord.h"
+#include "table.hh"
+#include "coord.hh"
 
 namespace fs = std::filesystem;
+
+#ifndef TABLE_DIR
 #define TABLE_DIR "tables/"
+#endif
 
 #ifdef VERBOSE
 #define VPRINT(...) printf(__VA_ARGS__)
@@ -30,16 +33,16 @@ void load_from(Table &table, std::string path)
     VPRINT("done.\n");
 }
 
-void doCleanupTables()
-{
-    SingletonTM<>::cleanup();
-    SingletonTP<>::cleanup();
-}
+// void doCleanupTables()
+// {
+//     SingletonTM<>::cleanup();
+//     SingletonTP<>::cleanup();
+// }
 
 template<typename T>
 template<typename Table, typename F1, typename F2>
-std::enable_if_t<Table::shape[0] == N_MOVE, void>
-TableMove<T>::buildMoveTable(Table &t, F1 coord2i, F2 i2coord, std::string filename)
+std::enable_if_t<Table::shape[0] == N_MOVE>
+TableMove<T>::buildMoveTable(Table &t, F1&& coord2i, F2&& i2coord, std::string filename)
 {
     VPRINT("creating move table %s of shape (%zu,%zu)... ", 
            filename.c_str(), t.shape[0], t.shape[1]);
@@ -94,8 +97,7 @@ TableMove<T>::~TableMove()
 
 template<typename T>
 template<typename Table, typename MT1, typename MT2>
-std::enable_if_t<Table::shape[0] == MT1::shape[1] 
-              && Table::shape[1] == MT2::shape[1], void>
+std::enable_if_t<Table::shape[0] == MT1::shape[1] && Table::shape[1] == MT2::shape[1]>
 TablePrunning<T>::buildPrunningTable(
     Table &t, const MT1 &mt1, const MT2 &mt2, std::string filename)
 {

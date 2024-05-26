@@ -7,17 +7,18 @@
 #include <cassert>
 #include <algorithm>
 
-typedef unsigned long long ull;
-/* ===================================================================|*/
+///
+///////////////////////////////  Declarations  ///////////////////////////////
+///
 
 /* convert sequence to string */
-template<typename C> 
-std::string seq2str(const C &xs,
+template<typename VectorLike> 
+std::string seq2str(const VectorLike &xs,
     std::string pre="", std::string suf="", std::string sep="");
 
 /* the cycle decompositon of permutation */
-template<typename C> 
-auto decomposite(const C &xs) -> std::vector<std::vector<typename C::value_type>>;
+template<typename VectorLike> 
+auto decomposite(const VectorLike &xs) -> std::vector<std::vector<typename VectorLike::value_type>>;
 
 /* the order (period) of permutation */
 template<typename T, size_t N> 
@@ -150,10 +151,12 @@ constexpr CArray<N,L,T> operator+(const CArray<N,L,T>&xs, const CArray<N,L,T>&ys
 template<size_t N, size_t L, typename T>
 constexpr CArray<N,L,T> operator-(const CArray<N,L,T>&xs);
 
-/* ===================================================================/*/
+///
+/////////////////////////////// Implimentations ///////////////////////////////
+///
 
-template<typename C> 
-std::string seq2str(const C &xs,
+template<typename VectorLike> 
+std::string seq2str(const VectorLike &xs, 
     std::string pre, std::string suf, std::string sep)
 {
     if(xs.size() == 0) return std::string("");
@@ -164,10 +167,10 @@ std::string seq2str(const C &xs,
     return ss.str();
 }
 
-template<typename C>
-auto decomposite(const C &xs) -> std::vector<std::vector<typename C::value_type>>
+template<typename VectorLike>
+auto decomposite(const VectorLike &xs) -> std::vector<std::vector<typename VectorLike::value_type>>
 {
-    using T = typename C::value_type;
+    using T = typename VectorLike::value_type;
     if(xs.size() == 0) return std::vector<std::vector<T>>(0);
     
     std::vector<size_t> fs(xs.size(),0);
@@ -305,9 +308,7 @@ constexpr size_t binomial(size_t n, size_t k)
 
 constexpr size_t factorial(size_t n)
 {
-    size_t prod = 1;
-    while(n > 1) prod *= n--;
-    return prod;
+    return n == 0 ? 1 : n * factorial(n-1);
 }
 
 template<size_t N, size_t M>
@@ -410,7 +411,6 @@ bool operator==(const CArray<N,L,T>&lhs, const CArray<N,L,T>&rhs)
 template<size_t N, typename T>
 constexpr Perm<N,T> operator*(const Perm<N,T> &X, const Perm<N,T> &Y)
 {
-    
     Perm<N,T> prod{};
     for(size_t i = 0; i < N; i++) prod[i] = X[Y[i]];
     return prod;

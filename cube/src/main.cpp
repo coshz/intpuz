@@ -1,138 +1,122 @@
 #include <string>
-#include <cstring>
-#include <cstdio>
-#include "solver.h"
-#include "maneuver.h"
 #include <iostream>
+#include <sstream>
+#include <unordered_set>
+#include "libcube.h"
 
-#define _DESC_      "A Rubik's Cube Solver"
-#define _VERSION_   "0.1"
+#define _VERSION_   "0.1.1"
 #define _AUTHOR_    "Coshz"
 
-bool is_valid_cube(const char *cube);
 
 struct REPL
 {
-    REPL(const char* prog)
-    {
-        printf("Welcome to %s!\n"
-               "[Desc] %s\n"
-               "[Usage] %s\n", prog, _DESC_, "`:h` for help, `:q` for quit");
-    }
-
-    void run();
-    std::string help();
-
-    /* -1: unsupported command; -2: invaid argument; n: the num of parsed arguments */
-    int parse(char *line);
-
-    /* used to store parsed arguments */
-    int cmd; char *args[5];
-
-    /* all supported commands */
-    static constexpr const char *cmdset[] = { "solve", "info", ":h", ":q" };
+    static void run();
+    static const char* help();
 };
 
-std::string REPL::help()
+const char* REPL::help()
 {
-    std::string h = 
+    return 
     "[Help]\n"
-    "    solve N [from] [to=id]     -- solve the [cube] in N steps if possible\n"
-    "                                  (default N:20)\n"
-    "    info  L [maneuver]         -- show the [maneuver] in level L\n"
-    "                                  (0:color cube; 1:cubie decomposition)\n"
-    "where:\n"
-    "   [cube] is the color configuration of cube;  eg: UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB\n"
-    "   [maneuver] is the moves acting on cube;     eg: FRL'B2D\n"
+    "    solve      <cube>  [tgt]       -- `solve2 30 <cube> [tgt]`\n"
+    "    solve2  N  <cube>  [tgt]       -- solve src cube to tgt(default:cid) in N steps if possible\n"
+    "    info L '<maneuver>'            -- resolve [maneuver] to L (1:color configuration; 2:cubie permutation)\n"
+    "\nwhere:\n"
+    "   <cube> is the color configuration of cube;  eg: `UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB`\n"
+    "   <maneuver> is the move sequence;            eg: `FRL'B2D`, `(DR'F2L){7} BD2`\n"
     ;
-    return h;
-}
-
-int REPL::parse(char *line)
-{
-    static const char *delimiters = " ";
-    static const int max_n_args = 5;
-
-    // clear states
-    cmd = -1; for(int i = 0; i < max_n_args; i++) args[i] = NULL;
-
-    int i = 0, k = 0; // cmd_id, argument_cnt
-    char *token = strtok(line, delimiters);
-    
-    // check command
-    while(i < 4 && strcmp(token, cmdset[i])) i++;
-    if(i >= 4) return -1;
-    else cmd = i;
-
-    // check arguments
-    switch(cmd)
-    {
-    case 0: // `solve N cube_src cube_tgt`
-        while(k < max_n_args) {
-            token = strtok(NULL, " ");
-            if(token) args[k++] = token; else break;
-        }
-        if((k == 0) ||
-           (k == 1 && !is_valid_cube(args[0])) ||
-           (k == 2 && ((!std::atoi(args[0]) && !is_valid_cube(args[0])) || !is_valid_cube(args[1]))) ||
-           (k >= 3 && !std::atoi(args[0]) &&  !is_valid_cube(args[1]) && !is_valid_cube(args[2]))
-        ) return -2;
-        break;
-    case 1: // `info N "maneuver"`
-        token = strtok(NULL, " "), args[0] = token;
-        while(token && *token == ' ') token++; //skip spaces after args[0]
-        if(token) token = strtok(token, "\""), args[1] = token;
-        if(!args[0] || !args[1]) return -2;
-        // k = sscanf(token, "%s \"%s\"", args[0], args[1]);
-        // if((k <= 1) 
-        //    // || (k > 1 && !std::atoi(args[0])) // 0 is allowed
-        // ) return -2;
-        break;
-    default: ;
-    }
-    return k;
 }
 
 void REPL::run()
 {
     size_t no=0;
-    static char line[120];
-    std::string res;
+    const size_t BS = 100;
+    char result[BS];
+    int rc;
+
+    std::cout << "Welcome! This is a Rubik's cube solver.\n"
+                 "(*`:h` for help, `:q` for quit *)\n";
+
     while(true)
     {
-        printf("\nIn [%zu]:= ", no);
-        scanf(" %[(': \")a-zA-Z0-9]", line), getchar();
+        std::string in;
+        std::cout << "\nIn [" << no << "] := ";
+        std::getline(std::cin, in);
+
+        if(in == "") continue;
+
+        std::string cmd, arg1, arg2, arg3;
+        std::stringstream ss(in);
+
+        ss >> cmd;
+        if(cmd == ":q") break;
+        if (cmd == ":h") { std::cout << help(); continue; }
+        
+        std::cout << "\nOut[" << no << "] => ";
     
-        if(!strcmp(line, "")){ continue; }
-        int rc = parse(line);
+        if (cmd == "info") {
+            auto strip = [](const std::string &s, const std::unordered_set<char> &cs) {
+                auto it1 = std::find_if_not(s.begin(), s.end(), 
+                    [&cs](auto &c) { return cs.count(c) > 0; }
+                );
+                auto it2 = std::find_if_not(s.rbegin(), s.rend(), 
+                    [&cs](auto &c) { return cs.count(c) > 0; }
+                ).base();
+                return it1 <= it2 ? std::string(it1,it2) : std::string();
+            };
 
-        if(cmd == 3) { break; }
-        if (rc == -1) { puts("[Error] not supported command.\n"); continue; }
-        else if (rc == -2) { puts("[Error] invalid Arguments\n"); continue; }
+            ss >> arg1; std::getline(ss,arg2);
+            std::unordered_set chs = {'"','\'',' '};
 
-        int N = (args[0]) ? std::atoi(args[0]) : 0;
-        switch(cmd)
-        {
-        case 0: 
-            if(rc == 1) res = CubeSolver::solve(args[0]);
-            else if (rc == 2) res = (N > 0) ? CubeSolver::solve(args[1], "", N)
-                                            : CubeSolver::solve(args[0],args[1]);
-            else res = CubeSolver::solve(args[1], args[2], N);
-            break;
-        case 1: 
-            res = Maneuver(args[1]).str(N); 
-            break;
-        case 2: puts(help().c_str()); continue;
+            if(arg1 == "1") facecube(strip(arg2,chs).c_str(), result);     
+            else if(arg1 == "2") permutation(strip(arg2,chs).c_str(), result);  
+            else {
+                std::cout << "!!! unsupported argument `" << arg1 << "`\n";
+                continue;
+            }
+            std::cout << result << '\n';
+        } 
+        else if (cmd == "solve" || cmd == "solve2") {
+            ss >> arg1 >> arg2 >> arg3;
+            if(cmd == "solve")
+            rc = solve(arg1 == "" ? NULL : arg1.c_str(), 
+                        arg2 == "" ? NULL : arg2.c_str(),
+                        result, 30);
+            else
+            rc = solve(arg2 == "" ? NULL : arg2.c_str(), 
+                        arg3 == "" ? NULL : arg3.c_str(),
+                        result, std::stoi(arg1));
+
+            switch(rc) {
+            case -1: std::cout << "!!! the source cube is invalid\n"; break;
+            case -2: std::cout << "!!! the target cube is invalid\n"; break;
+            case 1:  std::cout << "!!! unsolvable\n"; break;
+            case 2:  std::cout << "!!! solution not found since N is too small\n"; break;
+            default: // 0
+                std::string solution{};
+                solution += "[";
+                for(char *p = result; *p != '\0'; p++) {
+                    solution = solution + " " + Move2Str[*p - 1];
+                }
+                solution += (solution.length() == 1) ? "]": " ]";
+                std::cout << solution << '\n';
+            }
         }
-        printf("\nOut[%zu]: %s\n", no++, res.c_str());
+        else {
+            std::cout << "!!! unsupported command `" << cmd << "`\n";
+            continue;
+        }
+        no++;
     }
-    printf("\nGoodbye!\n");
+    std::cout << "\nGoodbye!\n";
 }
 
-/* first running will take seconds to generate tables before main() */
+/*!
+ * @note It'll take seconds to generate tables when you first run the program;
+ * please be patient. 
+ */
 int main(int argc, char *argv[])
 {
-    // std::atexit(doCleanupTables);
-    auto repl = REPL(argv[0]);
+    auto repl = REPL();
     repl.run();
 }

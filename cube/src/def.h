@@ -15,6 +15,7 @@ typedef ColorIndex      SingleFace[9];
 typedef ColorIndex      CornerColorIndex[8][3];
 typedef ColorIndex      EdgeColorIndex[12][2];
 typedef ColorIndex      FaceletColor[54];
+typedef Face            CentreFacelet[6];
 typedef Face            CornerFacelet[8][3];
 typedef Face            EdgeFacelet[12][2];
 typedef Face            Facelet[54];
@@ -22,13 +23,18 @@ typedef OrientedCorner  CornerCubie[8];
 typedef OrientedEdge    EdgeCubie[12];
 typedef Corner          EdgeNeighbour[12][2];
 
-const Face CC[6] = {U5,R5,F5,D5,L5,B5};
-
 const CornerColorIndex  CCI = {{UCol,RCol,FCol},{UCol,FCol,LCol},{UCol,LCol,BCol},{UCol,BCol,RCol},{DCol,FCol,RCol},{DCol,LCol,FCol},{DCol,BCol,LCol},{DCol,RCol,BCol}};
 const EdgeColorIndex    ECI = {{UCol,RCol},{UCol,FCol},{UCol,LCol},{UCol,BCol},{DCol,RCol},{DCol,FCol}, {DCol,LCol},{DCol,BCol},{FCol,RCol},{FCol,LCol},{BCol,LCol},{BCol,RCol}};
+const CentreFacelet     CC  = {U5,R5,F5,D5,L5,B5};
 const CornerFacelet     CF  = {{U9,R1,F3},{U7,F1,L3},{U1,L1,B3},{U3,B1,R3},{D3,F9,R7},{D1,L9,F7},{D7,B9,L7},{D9,R9,B7}};
 const EdgeFacelet       EF  = {{U6,R2},{U8,F2},{U4,L2},{U2,B2},{D6,R8},{D2,F8}, {D4,L8},{D8,B8},{F6,R4},{F4,L6},{B6,L4},{B4,R6}};
 const EdgeNeighbour     EN  = {{URF,UBR},{UFL,URF},{ULB,UFL},{UBR,ULB},{DRB,DFR},{DFR,DLF}, {DLF,DBL},{DBL,DRB},{URF,DFR},{DLF,UFL},{DBL,ULB},{UBR,DRB}};
+
+///
+/// The schema of permutation P = (x_1,...,x_n) is called:
+///   - "replaced by", if: P(i) = x_i;
+///   - "carry to",    if  P(x_i) = i;
+///
 
 /* Facelet Move: using notation schema of "carry-to" */
 const Facelet FaceletMove[6] = { 
@@ -81,7 +87,8 @@ const EdgeCubie EdgeCubieSym[4] = {
 };
 
 enum Constant {
-    NUM_GOD     = 20,       // God's number in QTM
+    GN_HTM      = 20,       // the God's number in HTM
+    GN_QTM      = 26,       // the God's number in QTM
     N_MOVE      = 18,       // 3*6, turn move
     N_TWIST     = 2187,     // 3^7, corner twist
     N_FLIP      = 2048,     // 2^11, edge flip
@@ -90,7 +97,7 @@ enum Constant {
     N_EDGE8     = 40320,    // 8!, ud-edges permutation
     N_EDGE4     = 24,       // 4!, the order of 4 ud-slices
     N_SYM       = 48,       // cube symmetries
-    N_SYM_D4h   = 16,       // D4h group which keeps UD axis 
+    N_SYM_D4h   = 16,       // D4h group (16 symmetries which preserve UD axis) 
     EQ_FLIPSLICE= 64430,    // [(flip,slice):D4h], equivalent class of flipslice
-    EQ_CORNER   = 2768,     // [(corner):D4h], equivalent class of corner permutation 
+    EQ_CORNER   = 2768,     // [(corner):D4h], equivalent class of corner
 };

@@ -13,8 +13,11 @@ typedef CArray<2,12,cube_value_t>   EdgeOri;
 struct FaceCube;
 struct CubieCube;
 
-/* check the validity of color configuration of cube */
-template<typename C> bool isValidConfig(const  C &cfg);
+/*!
+ * @brief check the validity of color configuration of cube
+ * @def A configuration is valid ::= it's solvable up to finite edge/corner flips
+ */
+template<typename VectorLike> bool isValidConfig(const VectorLike &cfg);
 
 struct FaceCube
 {
@@ -64,7 +67,7 @@ inline constexpr CornerPerm operator*(const CornerPerm &cp, const CubieCube &cc)
     return cp * cc.cp;
 }
 
-constexpr CornerOri operator*(const CornerOri &co, const CubieCube &cc)
+inline constexpr CornerOri operator*(const CornerOri &co, const CubieCube &cc)
 {
     return co * cc.cp + cc.co;
 }
@@ -93,11 +96,12 @@ inline bool operator==(const CubieCube &lhs, const CubieCube &rhs)
 
 /* cubiecube representations of 18 elementary moves */
 
-static constexpr CubieCube     mU = {{3,0,1,2,4,5,6,7},{0,0,0,0,0,0,0,0},{3,0,1,2,4,5,6,7,8,9,10,11},{0,0,0,0,0,0,0,0,0,0,0,0}};
-static constexpr CubieCube     mR = {{4,1,2,0,7,5,6,3},{2,0,0,1,1,0,0,2},{8,1,2,3,11,5,6,7,4,9,10,0},{0,0,0,0,0,0,0,0,0,0,0,0}};
-static constexpr CubieCube     mF = {{1,5,2,3,0,4,6,7},{1,2,0,0,2,1,0,0},{0,9,2,3,4,8,6,7,1,5,10,11},{0,1,0,0,0,1,0,0,1,1,0,0}};
-static constexpr CubieCube     mD = {{0,1,2,3,5,6,7,4},{0,0,0,0,0,0,0,0},{0,1,2,3,5,6,7,4,8,9,10,11},{0,0,0,0,0,0,0,0,0,0,0,0}};
-static constexpr CubieCube     mL = {{0,2,6,3,4,1,5,7},{0,1,2,0,0,2,1,0},{0,1,10,3,4,5,9,7,8,2,6,11},{0,0,0,0,0,0,0,0,0,0,0,0}};
-static constexpr CubieCube     mB = {{0,1,3,7,4,5,2,6},{0,0,1,2,0,0,2,1},{0,1,2,11,4,5,6,10,8,9,3,7},{0,0,0,1,0,0,0,1,0,0,1,1}};
-static constexpr std::array<CubieCube,18> 
+inline constexpr CubieCube     mU = {{3,0,1,2,4,5,6,7},{0,0,0,0,0,0,0,0},{3,0,1,2,4,5,6,7,8,9,10,11},{0,0,0,0,0,0,0,0,0,0,0,0}};
+inline constexpr CubieCube     mR = {{4,1,2,0,7,5,6,3},{2,0,0,1,1,0,0,2},{8,1,2,3,11,5,6,7,4,9,10,0},{0,0,0,0,0,0,0,0,0,0,0,0}};
+inline constexpr CubieCube     mF = {{1,5,2,3,0,4,6,7},{1,2,0,0,2,1,0,0},{0,9,2,3,4,8,6,7,1,5,10,11},{0,1,0,0,0,1,0,0,1,1,0,0}};
+inline constexpr CubieCube     mD = {{0,1,2,3,5,6,7,4},{0,0,0,0,0,0,0,0},{0,1,2,3,5,6,7,4,8,9,10,11},{0,0,0,0,0,0,0,0,0,0,0,0}};
+inline constexpr CubieCube     mL = {{0,2,6,3,4,1,5,7},{0,1,2,0,0,2,1,0},{0,1,10,3,4,5,9,7,8,2,6,11},{0,0,0,0,0,0,0,0,0,0,0,0}};
+inline constexpr CubieCube     mB = {{0,1,3,7,4,5,2,6},{0,0,1,2,0,0,2,1},{0,1,2,11,4,5,6,10,8,9,3,7},{0,0,0,1,0,0,0,1,0,0,1,1}};
+
+inline constexpr std::array<CubieCube,18> 
 ElementaryMove = { mU,mU*mU,mU*mU*mU,mR,mR*mR,mR*mR*mR,mF,mF*mF,mF*mF*mF,mD,mD*mD,mD*mD*mD,mL,mL*mL,mL*mL*mL,mB,mB*mB,mB*mB*mB };
