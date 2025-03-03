@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(Tetris VERSION 0.1.1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(wxWidgets REQUIRED COMPONENTS core base)
+include(${wxWidgets_USE_FILE})
+
+set(SRC_FILES
+# def.h
+# style.h
+# help.hpp
+# model.h
+# view.h
+# view.inl
+# controller.h
+# tetris.h
+    main.cpp
+    tetris.cpp 
+    controller.cpp
+    model.cpp
+    events.cpp
+    # evtest1.cpp
+)
+
+# add_compile_options(-fsanitize=address)
+# add_link_options(-fsanitize=address)
+
+add_executable(${PROJECT_NAME} ${SRC_FILES})
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES})
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+    target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+endif()
+# add_custom_target(clean-all COMMAND ${CMAKE_COMMAND} -P clean.cmake)
+add_custom_target(run COMMAND ${CMAKE_BINARY_DIR}/${PROJECT_NAME})
